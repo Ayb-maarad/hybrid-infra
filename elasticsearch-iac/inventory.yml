@@ -1,0 +1,20 @@
+all:
+  children:
+    dc1:
+      hosts:
+        vm1-dc1:
+          ansible_host: 10.10.0.2
+          ansible_user: esteban
+        vm2-dc1:
+          ansible_host: 10.10.0.3
+          ansible_user: lil4
+    dc2:
+      hosts:
+        vm1-dc2:
+          ansible_host: 10.20.0.3
+        # vm2 du DC2 a un souci (à resoudre)
+        #vm2-dc2:
+        #  ansible_host: 10.20.0.4
+  vars:
+    ansible_user: lil4
+    ansible_ssh_common_args: "-o ProxyJump=jayson@51.254.7.156"

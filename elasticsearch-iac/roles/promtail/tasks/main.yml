@@ -1,0 +1,54 @@
+- name: Install dependencies
+  apt:
+    name:
+      - curl
+      - gnupg
+      - apt-transport-https
+    state: present
+    update_cache: yes
+
+- name: Add Grafana GPG key
+  apt_key:
+    url: https://packages.grafana.com/gpg.key
+    state: present
+
+- name: Add Grafana APT repo
+  apt_repository:
+    repo: "deb https://packages.grafana.com/oss/deb stable main"
+    state: present
+
+- name: Install Promtail
+  apt:
+    name: promtail
+    state: present
+    update_cache: yes
+
+- name: Configure Promtail
+  copy:
+    dest: /etc/promtail/config.yml
+    content: |
+      server:
+        http_listen_port: 9080
+        grpc_listen_port: 0
+      positions:
+        filename: /var/log/positions.yaml
+      clients:
+        - url: http://10.20.0.3:3100/loki/api/v1/push
+      scrape_configs:
+        - job_name: system
+          static_configs:
+            - targets: ['localhost']
+              labels:
+                job: varlogs
+                __path__: /var/log/*.log
+
+- name: Ensure Promtail positions directory exists
+  file:
+    path: /var/log
+    state: directory
+
+- name: Enable and start Promtail service
+  systemd:
+    name: promtail
+    enabled: yes
+    state: started

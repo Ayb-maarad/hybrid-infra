@@ -1,0 +1,35 @@
+---
+- name: Configuration de la topologie VPN sur pfSense via IaC (pfsensible)
+  hosts: firewalls
+  gather_facts: false
+
+  tasks:
+    - name: 1. Configuration du tunnel OpenVPN (Serveur Peer-to-Peer)
+      pfsensible.core.openvpn_server:
+        name: "Tunnel VPN Site-to-Site vers DC2"
+        protocol: "udp"
+        interface: "wan"
+        local_port: 1194
+        mode: "p2p_shared_key"
+        shared_key: "{{ vault_openvpn_static_key }}"
+        tunnel_network: "10.255.0.0/30"
+        state: present
+
+    - name: 2. Assignation et activation de l'interface virtuelle du tunnel
+      pfsensible.core.interface:
+        descr: "ovpns1"
+        if: "openvpn"
+        ipaddr: "10.255.0.1"
+        subnet: 30
+        enable: true
+        state: present
+
+    - name: 3. Configuration de la règle de pare-feu pour autoriser le trafic VPN
+      pfsensible.core.filter_rule:
+        interface: "openvpn"
+        proto: "any"
+        src: "any"
+        dst: "any"
+        descr: "Autoriser tout le trafic à travers le tunnel VPN"
+        action: "pass"
+        state: present

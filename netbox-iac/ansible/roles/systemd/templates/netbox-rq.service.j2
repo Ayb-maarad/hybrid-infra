@@ -1,0 +1,18 @@
+[Unit]
+Description=NetBox RQ Worker
+Documentation=https://netboxlabs.com/docs/netbox/
+After=network-online.target postgresql.service redis-server.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User={{ netbox_system_user }}
+Group={{ netbox_system_user }}
+WorkingDirectory={{ netbox_app }}/netbox
+ExecStart={{ netbox_venv }}/bin/python {{ netbox_app }}/netbox/manage.py rqworker high default low
+Restart=on-failure
+RestartSec=30
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

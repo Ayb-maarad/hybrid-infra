@@ -1,0 +1,196 @@
+
+- name: Create regions
+  netbox.netbox.netbox_region:
+    netbox_url: "{{ netbox_url }}"
+    netbox_token: "{{ netbox_token }}"
+    data:
+      name: "{{ item.name }}"
+      slug: "{{ item.slug }}"
+    state: present
+  loop: "{{ netbox_regions | default([]) }}"
+
+
+- name: Create sites
+  netbox.netbox.netbox_site:
+    netbox_url: "{{ netbox_url }}"
+    netbox_token: "{{ netbox_token }}"
+    data:
+      name: "{{ item.name }}"
+      slug: "{{ item.slug }}"
+      region: "{{ item.region }}"
+      status: "{{ item.status }}"
+      description: "{{ item.description }}"
+    state: present
+  loop: "{{ netbox_sites | default([]) }}"
+
+- name: Create device roles
+  netbox.netbox.netbox_device_role:
+    netbox_url: "{{ netbox_url }}"
+    netbox_token: "{{ netbox_token }}"
+    data:
+      name: "{{ item.name }}"
+      slug: "{{ item.slug }}"
+      color: "{{ item.color }}"
+    state: present
+  loop: "{{ netbox_device_roles | default([]) }}"
+
+- name: Create manufacturers
+  netbox.netbox.netbox_manufacturer:
+    netbox_url: "{{ netbox_url }}"
+    netbox_token: "{{ netbox_token }}"
+    data:
+      name: "{{ item.name }}"
+      slug: "{{ item.slug }}"
+    state: present
+  loop: "{{ netbox_manufacturers | default([]) }}"
+
+- name: Create device types
+  netbox.netbox.netbox_device_type:
+    netbox_url: "{{ netbox_url }}"
+    netbox_token: "{{ netbox_token }}"
+    data:
+      model: "{{ item.model }}"
+      slug: "{{ item.slug }}"
+      manufacturer: "{{ item.manufacturer }}"
+    state: present
+  loop: "{{ netbox_device_types | default([]) }}"
+
+- name: Create platforms
+  netbox.netbox.netbox_platform:
+    netbox_url: "{{ netbox_url }}"
+    netbox_token: "{{ netbox_token }}"
+    data:
+      name: "{{ item.name }}"
+      slug: "{{ item.slug }}"
+    state: present
+  loop: "{{ netbox_platforms | default([]) }}"
+
+- name: Create prefixes
+  netbox.netbox.netbox_prefix:
+    netbox_url: "{{ netbox_url }}"
+    netbox_token: "{{ netbox_token }}"
+    data:
+      prefix: "{{ item.prefix }}"
+      scope_type: "dcim.site"
+      scope: "{{ item.site }}"
+      status: "{{ item.status }}"
+      description: "{{ item.description }}"
+    state: present
+  loop: "{{ netbox_prefixes | default([]) }}"
+
+
+- name: Create devices
+  netbox.netbox.netbox_device:
+    netbox_url: "{{ netbox_url }}"
+    netbox_token: "{{ netbox_token }}"
+    data:
+      name: "{{ item.name }}"
+      site: "{{ item.site }}"
+      device_role: "{{ item.role }}"
+      device_type: "{{ item.device_type }}"
+      platform: "{{ item.platform }}"
+      status: active
+    state: present
+  loop: "{{ netbox_devices | default([]) }}"
+
+
+- name: Create device interfaces
+  netbox.netbox.netbox_device_interface:
+    netbox_url: "{{ netbox_url }}"
+    netbox_token: "{{ netbox_token }}"
+    data:
+      device: "{{ item.device }}"
+      name: "{{ item.name }}"
+      type: "{{ item.type | default('Virtual') }}"
+      enabled: "{{ item.enabled | default(true) }}"
+      description: "{{ item.description | default('') }}"
+    state: present
+  loop: "{{ netbox_device_interfaces | default([]) }}"
+
+- name: Create cluster types
+  netbox.netbox.netbox_cluster_type:
+    netbox_url: "{{ netbox_url }}"
+    netbox_token: "{{ netbox_token }}"
+    data:
+      name: "{{ item.name }}"
+      slug: "{{ item.slug }}"
+    state: present
+  loop: "{{ netbox_cluster_types | default([]) }}"
+
+- name: Create clusters
+  netbox.netbox.netbox_cluster:
+    netbox_url: "{{ netbox_url }}"
+    netbox_token: "{{ netbox_token }}"
+    data:
+      name: "{{ item.name }}"
+      cluster_type: "{{ item.cluster_type }}"
+      scope_type: "dcim.site"
+      scope: "{{ item.site }}"
+      status: "{{ item.status | default('active') }}"
+    state: present
+  loop: "{{ netbox_clusters | default([]) }}"
+
+- name: Create virtual machines
+  netbox.netbox.netbox_virtual_machine:
+    netbox_url: "{{ netbox_url }}"
+    netbox_token: "{{ netbox_token }}"
+    data:
+      name: "{{ item.name }}"
+      site: "{{ item.site }}"
+      cluster: "{{ item.cluster }}"
+      virtual_machine_role: "{{ item.role }}"
+      platform: "{{ item.platform }}"
+      status: active
+      vcpus: "{{ item.vcpus }}"
+      memory: "{{ item.memory }}"
+      disk: "{{ item.disk }}"
+    state: present
+  loop: "{{ netbox_vms | default([]) }}"
+
+- name: Create IP addresses
+  netbox.netbox.netbox_ip_address:
+    netbox_url: "{{ netbox_url }}"
+    netbox_token: "{{ netbox_token }}"
+    data:
+      address: "{{ item.address }}"
+      dns_name: "{{ item.dns_name | default(omit) }}"
+      description: "{{ item.description | default('') }}"
+      assigned_object: "{{ item.assigned_object | default(omit) }}"
+      status: active
+    state: present
+  loop: "{{ netbox_ip_addresses | default([]) }}"
+
+- name: Create services
+  netbox.netbox.netbox_service:
+    netbox_url: "{{ netbox_url }}"
+    netbox_token: "{{ netbox_token }}"
+    data:
+      name: "{{ item.name }}"
+      protocol: "{{ item.protocol }}"
+      ports: "{{ item.ports }}"
+      device: "{{ item.device | default(omit) }}"
+      virtual_machine: "{{ item.virtual_machine | default(omit) }}"
+    state: present
+  loop: "{{ netbox_services | default([]) }}"
+
+- name: Create tunnel groups
+  netbox.netbox.netbox_tunnel_group:
+    netbox_url: "{{ netbox_url }}"
+    netbox_token: "{{ netbox_token }}"
+    data:
+      name: "{{ item.name }}"
+    state: present
+  loop: "{{ netbox_tunnel_groups | default([]) }}"
+
+- name: Create tunnels
+  netbox.netbox.netbox_tunnel:
+    netbox_url: "{{ netbox_url }}"
+    netbox_token: "{{ netbox_token }}"
+    data:
+      name: "{{ item.name }}"
+      tunnel_group: "{{ item.tunnel_group }}"
+      encapsulation: "{{ item.encapsulation }}"
+      status: "{{ item.status }}"
+      description: "{{ item.description }}"
+    state: present
+  loop: "{{ netbox_tunnels | default([]) }}"

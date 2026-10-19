@@ -1,0 +1,124 @@
+---
+- name: Configure DHCP and DNS forwarding on pfSense
+  hosts: pfsense
+  gather_facts: false
+  tags:
+    - pfsense
+
+  vars_files:
+    - vars.yml
+
+  tasks:
+    - name: Validate site_id
+      ansible.builtin.assert:
+        that:
+          - site_id is defined
+          - site_id in pfsense_sites
+        fail_msg: "site_id must be site1 or site2"
+
+    - name: Show target pfSense
+      ansible.builtin.debug:
+        msg: "Configuring {{ pfsense_sites[site_id].name }} on {{ inventory_hostname }}"
+
+    - name: Backup pfSense config.xml
+      ansible.builtin.raw: |
+        cp /cf/conf/config.xml /cf/conf/config.xml.ansible-dns-dhcp.$(date +%Y%m%d-%H%M%S)
+      changed_when: true
+
+    - name: Upload pfSense PHP configuration script
+      ansible.builtin.raw: |
+        cat > /tmp/pfsense_dns_dhcp_config.php <<'PHP_EOF'
+        {{ lookup('template', 'templates/pfsense_dns_dhcp_config.php.j2') }}
+        PHP_EOF
+      changed_when: true
+
+    - name: Execute pfSense DHCP/DNS configuration script
+      ansible.builtin.raw: |
+        php -f /tmp/pfsense_dns_dhcp_config.php
+      register: pfsense_config_result
+      changed_when: true
+
+    - name: Show pfSense configuration result
+      ansible.builtin.debug:
+        var: pfsense_config_result.stdout_lines
+
+    - name: Remove temporary PHP script
+      ansible.builtin.raw: |
+        rm -f /tmp/pfsense_dns_dhcp_config.php
+      changed_when: true
+
+    - name: Validate config contains expected domain
+      ansible.builtin.raw: |
+        grep -q "{{ pfsense_sites[site_id].domain }}" /cf/conf/config.xml && echo "Domain {{ pfsense_sites[site_id].domain }} found in config.xml"
+      register: validation_result
+      changed_when: false
+
+    - name: Show validation result
+      ansible.builtin.debug:
+        var: validation_result.stdout_lines
+
+- name: Configure Linux clients to use pfSense DNS
+  hosts: dns_clients
+  become: true
+  gather_facts: false
+  tags:
+    - clients
+
+  vars_files:
+    - vars.yml
+
+  tasks:
+    - name: Validate client_site_id
+      ansible.builtin.assert:
+        that:
+          - client_site_id is defined
+          - client_site_id in pfsense_sites
+        fail_msg: "client_site_id must be site1 or site2"
+
+    - name: Create systemd-resolved drop-in directory
+      ansible.builtin.file:
+        path: /etc/systemd/resolved.conf.d
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Install systemd-resolved DNS override
+      ansible.builtin.copy:
+        dest: /etc/systemd/resolved.conf.d/10-internal-dns.conf
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          [Resolve]
+          DNS=
+          DNS={{ pfsense_sites[client_site_id].dns_server }}
+          Domains=
+          Domains={% for site in pfsense_sites.values() %}~{{ site.domain }} {% endfor %}{{ pfsense_sites[client_site_id].domain }}
+          FallbackDNS=
+      notify: Restart systemd-resolved
+
+    - name: Apply DNS resolver changes
+      ansible.builtin.meta: flush_handlers
+
+    - name: Flush DNS cache
+      ansible.builtin.command: resolvectl flush-caches
+      changed_when: false
+      failed_when: false
+
+    - name: Test internal DNS resolution
+      ansible.builtin.command: >
+        resolvectl query
+        {{ client_dns_test_name | default(pfsense_sites[client_site_id].host_overrides[0].host ~ '.' ~ pfsense_sites[client_site_id].host_overrides[0].domain) }}
+      register: dns_client_test
+      changed_when: false
+
+    - name: Show DNS test result
+      ansible.builtin.debug:
+        var: dns_client_test.stdout_lines
+
+  handlers:
+    - name: Restart systemd-resolved
+      ansible.builtin.service:
+        name: systemd-resolved
+        state: restarted

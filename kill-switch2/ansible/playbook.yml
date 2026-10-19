@@ -1,0 +1,124 @@
+---
+- name: Validate kill-switch2 input
+  hosts: localhost
+  gather_facts: false
+
+  vars_files:
+    - vars.yml
+
+  tasks:
+    - name: Check kill_switch_state
+      ansible.builtin.assert:
+        that:
+          - kill_switch_state is defined
+          - kill_switch_state in kill_switch_valid_states
+        fail_msg: "Use -e kill_switch_state=soft, hard or off"
+
+- name: Apply pfSense kill-switch2 rules
+  hosts: pfsense
+  gather_facts: false
+
+  vars_files:
+    - vars.yml
+
+  tasks:
+    - name: Validate site_id
+      ansible.builtin.assert:
+        that:
+          - site_id is defined
+          - site_id in kill_switch_sites
+        fail_msg: "site_id must be site1 or site2"
+
+    - name: Backup pfSense config.xml
+      ansible.builtin.raw: |
+        cp /cf/conf/config.xml /cf/conf/config.xml.kill-switch2.$(date +%Y%m%d-%H%M%S)
+      changed_when: true
+
+    - name: Upload pfSense kill-switch2 PHP script
+      ansible.builtin.raw: |
+        cat > /tmp/pfsense_kill_switch2.php <<'PHP_EOF'
+        {{ lookup('template', 'templates/pfsense_kill_switch.php.j2') }}
+        PHP_EOF
+      changed_when: true
+
+    - name: Execute pfSense kill-switch2 PHP script asynchronously
+      ansible.builtin.raw: |
+        nohup sh -c 'php -d display_errors=1 -f /tmp/pfsense_kill_switch2.php > /tmp/pfsense_kill_switch2.log 2>&1' >/dev/null 2>&1 &
+        sleep 2
+        echo "pfSense kill-switch2 script started; reconnecting for log"
+      register: kill_switch2_start
+      changed_when: true
+
+    - name: Wait for pfSense SSH after filter reload
+      ansible.builtin.wait_for_connection:
+        delay: 3
+        timeout: 30
+
+    - name: Read pfSense kill-switch2 log
+      ansible.builtin.raw: |
+        cat /tmp/pfsense_kill_switch2.log
+      register: kill_switch2_result
+      changed_when: false
+
+    - name: Show pfSense kill-switch2 result
+      ansible.builtin.debug:
+        var: kill_switch2_result.stdout_lines
+
+    - name: Reload pfSense filter rules asynchronously
+      ansible.builtin.raw: |
+        nohup sh -c '/etc/rc.filter_configure > /tmp/pfsense_kill_switch2_filter_reload.log 2>&1' >/dev/null 2>&1 &
+        sleep 2
+        echo "pfSense filter reload started; reconnecting for log"
+      register: filter_reload_start
+      changed_when: true
+      failed_when: false
+
+    - name: Wait for pfSense SSH after filter reload
+      ansible.builtin.wait_for_connection:
+        delay: 3
+        timeout: 30
+
+    - name: Read pfSense filter reload log
+      ansible.builtin.raw: |
+        cat /tmp/pfsense_kill_switch2_filter_reload.log 2>/dev/null || true
+      register: filter_reload_result
+      changed_when: false
+      failed_when: false
+
+    - name: Show pfSense filter reload result
+      ansible.builtin.debug:
+        var: filter_reload_result.stdout_lines
+
+    - name: Remove temporary PHP script
+      ansible.builtin.raw: |
+        rm -f /tmp/pfsense_kill_switch2.php
+      changed_when: true
+
+    - name: HARD - Stop OpenVPN on pfSense Site 2
+      ansible.builtin.raw: service openvpn onestop
+      when:
+        - kill_switch_manage_vpn | bool
+        - kill_switch_state == "hard"
+        - site_id == "site2"
+      register: openvpn_stop
+      changed_when: true
+      failed_when: false
+
+    - name: OFF - Start OpenVPN on pfSense Site 2
+      ansible.builtin.raw: service openvpn onestart
+      when:
+        - kill_switch_manage_vpn | bool
+        - kill_switch_state == "off"
+        - site_id == "site2"
+      register: openvpn_start
+      changed_when: true
+      failed_when: false
+
+    - name: Show OpenVPN stop/start result
+      ansible.builtin.debug:
+        msg:
+          stop: "{{ openvpn_stop.stdout_lines | default([]) }}"
+          start: "{{ openvpn_start.stdout_lines | default([]) }}"
+      when:
+        - site_id == "site2"
+        - kill_switch_state in ["hard", "off"]

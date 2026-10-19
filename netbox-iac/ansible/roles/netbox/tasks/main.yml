@@ -1,0 +1,111 @@
+- name: Create netbox system user
+  user:
+    name: "{{ netbox_system_user }}"
+    system: true
+    home: "{{ netbox_home }}"
+    shell: /bin/bash
+    create_home: true
+
+- name: Check if NetBox already installed
+  stat:
+    path: "{{ netbox_app }}/netbox/manage.py"
+  register: netbox_installed
+
+- name: Download NetBox archive
+  get_url:
+    url: "https://github.com/netbox-community/netbox/archive/refs/tags/v{{ netbox_version }}.tar.gz"
+    dest: "/tmp/netbox-{{ netbox_version }}.tar.gz"
+    mode: "0644"
+  when: not netbox_installed.stat.exists
+
+- name: Extract NetBox
+  unarchive:
+    src: "/tmp/netbox-{{ netbox_version }}.tar.gz"
+    dest: "/tmp"
+    remote_src: true
+  when: not netbox_installed.stat.exists
+
+- name: Move NetBox into place
+  command: "mv /tmp/netbox-{{ netbox_version }} {{ netbox_app }}"
+  when: not netbox_installed.stat.exists
+
+- name: Set ownership on NetBox directory
+  file:
+    path: "{{ netbox_home }}"
+    owner: "{{ netbox_system_user }}"
+    group: "{{ netbox_system_user }}"
+    recurse: true
+
+- name: Create local requirements file
+  copy:
+    dest: "{{ netbox_app }}/local_requirements.txt"
+    owner: "{{ netbox_system_user }}"
+    group: "{{ netbox_system_user }}"
+    mode: "0644"
+    content: ""
+
+- name: Deploy NetBox configuration
+  template:
+    src: configuration.py.j2
+    dest: "{{ netbox_app }}/netbox/netbox/configuration.py"
+    owner: "{{ netbox_system_user }}"
+    group: "{{ netbox_system_user }}"
+    mode: "0640"
+
+- name: Create Python virtual environment
+  command: "sudo -u {{ netbox_system_user }} python3 -m venv {{ netbox_venv }}"
+  args:
+    creates: "{{ netbox_venv }}/bin/python"
+
+- name: Upgrade pip and wheel
+  command: "sudo -u {{ netbox_system_user }} {{ netbox_venv }}/bin/pip install --no-cache-dir --upgrade pip wheel"
+  changed_when: false
+
+- name: Install NetBox requirements
+  command: "sudo -u {{ netbox_system_user }} {{ netbox_venv }}/bin/pip install --no-cache-dir -r {{ netbox_app }}/requirements.txt"
+  changed_when: false
+
+- name: Run NetBox migrations
+  command: "sudo -u {{ netbox_system_user }} {{ netbox_venv }}/bin/python {{ netbox_app }}/netbox/manage.py migrate"
+  args:
+    chdir: "{{ netbox_app }}/netbox"
+  changed_when: false
+
+- name: Collect static files
+  command: "sudo -u {{ netbox_system_user }} {{ netbox_venv }}/bin/python {{ netbox_app }}/netbox/manage.py collectstatic --no-input"
+  args:
+    chdir: "{{ netbox_app }}/netbox"
+  changed_when: false
+
+- name: Allow nginx to traverse NetBox directories
+  file:
+    path: "{{ item }}"
+    mode: "0755"
+  loop:
+    - /opt/netbox
+    - /opt/netbox/app
+    - /opt/netbox/app/netbox
+    - /opt/netbox/app/netbox/static
+
+- name: Ensure static files are readable
+  file:
+    path: "{{ netbox_app }}/netbox/static"
+    owner: "{{ netbox_system_user }}"
+    group: www-data
+    mode: "0755"
+    recurse: true
+
+- name: Remove downloaded archive
+  file:
+    path: "/tmp/netbox-{{ netbox_version }}.tar.gz"
+    state: absent
+
+- name: Remove extracted leftovers
+  file:
+    path: "/tmp/netbox-{{ netbox_version }}"
+    state: absent
+
+- name: Clean pip cache
+  file:
+    path: "/opt/netbox/.cache"
+    state: absent

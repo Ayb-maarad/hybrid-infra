@@ -1,0 +1,5 @@
+collections:
+  - name: community.postgresql
+  - name: netbox.netbox
+    version: ">=3.23.0"
+  - name: pfsensible.core

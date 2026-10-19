@@ -1,0 +1,47 @@
+---
+kill_switch_valid_states:
+  - "off"
+  - "soft"
+  - "hard"
+
+kill_switch_marker: "KILL_SWITCH2"
+kill_switch_manage_vpn: true
+
+kill_switch_bastion_ip: "10.20.0.2"
+
+kill_switch_user_networks:
+  - "10.10.0.0/24"
+  - "10.20.0.0/24"
+
+kill_switch_interfaces:
+  - "lan"
+  - "openvpn"
+
+kill_switch_sites:
+  site1:
+    name: "Site 1 - On-prem"
+    services:
+      - name: "NetBox"
+        ip: "10.10.0.2"
+        ports:
+          - "80"
+          - "443"
+          - "8000"
+          - "8001"
+      - name: "ELK"
+        ip: "10.10.0.3"
+        ports:
+          - "22"
+          - "443"
+          - "5601"
+          - "9200"
+
+  site2:
+    name: "Site 2 - Distant"
+    services:
+      - name: "Web admin ports"
+        ip: "10.20.0.3"
+        ports:
+          - "22"
+          - "443"
+

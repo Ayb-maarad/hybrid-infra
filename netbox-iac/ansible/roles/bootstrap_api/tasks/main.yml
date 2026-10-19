@@ -1,0 +1,8 @@
+- name: Ensure NetBox admin superuser exists
+  shell: |
+    sudo -u {{ netbox_system_user }} DJANGO_SUPERUSER_USERNAME={{ netbox_admin_user }} \
+    DJANGO_SUPERUSER_EMAIL={{ netbox_admin_email }} \
+    DJANGO_SUPERUSER_PASSWORD={{ netbox_admin_password }} \
+    {{ netbox_venv }}/bin/python {{ netbox_app }}/netbox/manage.py createsuperuser --noinput || true
+  changed_when: false
+  no_log: true

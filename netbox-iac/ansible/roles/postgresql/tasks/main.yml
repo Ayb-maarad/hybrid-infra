@@ -1,0 +1,36 @@
+- name: Install PostgreSQL
+  apt:
+    name:
+      - postgresql
+      - postgresql-contrib
+      - python3-psycopg2
+    state: present
+    update_cache: true
+
+- name: Enable PostgreSQL
+  systemd:
+    name: postgresql
+    enabled: true
+    state: started
+
+- name: Check if NetBox database user exists
+  command: sudo -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='{{ postgres_user }}'"
+  register: postgres_user_exists
+  changed_when: false
+
+- name: Create NetBox database user
+  command: sudo -u postgres psql -c "CREATE USER {{ postgres_user }} WITH PASSWORD '{{ postgres_password }}';"
+  when: postgres_user_exists.stdout != "1"
+
+- name: Check if NetBox database exists
+  command: sudo -u postgres psql -tAc "SELECT 1 FROM pg_database WHERE datname='{{ postgres_db }}'"
+  register: postgres_db_exists
+  changed_when: false
+
+- name: Create NetBox database
+  command: sudo -u postgres psql -c "CREATE DATABASE {{ postgres_db }} OWNER {{ postgres_user }};"
+  when: postgres_db_exists.stdout != "1"
+
+- name: Grant privileges on NetBox database
+  command: sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE {{ postgres_db }} TO {{ postgres_user }};"
+  changed_when: false

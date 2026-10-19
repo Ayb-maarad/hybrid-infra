@@ -1,0 +1,33 @@
+- name: Install nginx
+  apt:
+    name: nginx
+    state: present
+    update_cache: true
+
+- name: Deploy nginx site configuration
+  template:
+    src: internal-site.conf.j2
+    dest: /etc/nginx/sites-available/internal
+    mode: "0644"
+
+- name: Enable internal site
+  file:
+    src: /etc/nginx/sites-available/internal
+    dest: /etc/nginx/sites-enabled/internal
+    state: link
+    force: true
+
+- name: Disable default nginx site
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+
+- name: Test nginx configuration
+  command: nginx -t
+  changed_when: false
+
+- name: Enable and restart nginx
+  systemd:
+    name: nginx
+    enabled: true
+    state: restarted

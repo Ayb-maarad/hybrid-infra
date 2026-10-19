@@ -1,0 +1,11 @@
+.DS_Store
+.idea/
+.vscode/
+.vault-pass
+.vault-password
+.env
+.env.*
+!.env.example
+README.credentials.local.md
+*.pem
+*.key

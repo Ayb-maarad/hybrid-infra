@@ -1,0 +1,34 @@
+ALLOWED_HOSTS = {{ netbox_allowed_hosts | to_json }}
+
+DATABASE = {
+    'NAME': '{{ postgres_db }}',
+    'USER': '{{ postgres_user }}',
+    'PASSWORD': '{{ postgres_password }}',
+    'HOST': 'localhost',
+    'PORT': '',
+    'CONN_MAX_AGE': 300,
+}
+
+REDIS = {
+    'tasks': {
+        'HOST': 'localhost',
+        'PORT': 6379,
+        'PASSWORD': '',
+        'DATABASE': 0,
+        'SSL': False,
+    },
+    'caching': {
+        'HOST': 'localhost',
+        'PORT': 6379,
+        'PASSWORD': '',
+        'DATABASE': 1,
+        'SSL': False,
+    }
+}
+
+SECRET_KEY = '{{ netbox_secret_key }}'
+DEBUG = False
+
+API_TOKEN_PEPPERS = {
+    1: '{{ netbox_api_token_pepper }}',
+}

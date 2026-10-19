@@ -1,0 +1,20 @@
+netbox_version: "4.5.5"
+netbox_system_user: "netbox"
+netbox_home: "/opt/netbox"
+netbox_app: "/opt/netbox/app"
+netbox_venv: "/opt/netbox/venv"
+postgres_db: "netbox"
+postgres_user: "netbox"
+postgres_password: "{{ vault_postgres_password }}"
+netbox_secret_key: "{{ vault_netbox_secret_key }}"
+netbox_allowed_hosts:
+  - "127.0.0.1"
+  - "localhost"
+  - "10.10.0.10"
+  - "10.10.0.2"
+
+netbox_port: 8001
+netbox_admin_user: "alpha"
+netbox_admin_email: "alpha@netbox.local"
+netbox_admin_password: "{{ vault_netbox_admin_password }}"
+netbox_api_token_pepper: "{{ vault_netbox_api_token_pepper }}"

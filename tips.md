@@ -1,0 +1,2 @@
+- To change keyboard on bsd use kbdcontrol, eg: kbdcontrol -l fr
+- pfctl -d & pfctl -e to enable or disable pfsense

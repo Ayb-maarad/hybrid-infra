@@ -1,0 +1,348 @@
+netbox_url: "http://10.10.0.2"
+netbox_token: "{{ vault_netbox_token }}"
+
+netbox_cluster_types:
+  - name: Proxmox VE
+    slug: proxmox-ve
+
+netbox_clusters:
+  - name: proxmox-cluster-dc1
+    cluster_type: Proxmox VE
+    site: DC1-ONPREM
+    status: active
+  - name: proxmox-cluster-dc2
+    cluster_type: Proxmox VE
+    site: DC2-REMOTE
+    status: active
+
+
+netbox_regions:
+  - name: ON-PREM
+    slug: on-prem
+  - name: REMOTE
+    slug: remote
+
+netbox_sites:
+  - name: DC1-ONPREM
+    slug: dc1-onprem
+    region: ON-PREM
+    status: active
+    description: "Site Proxmox on-prem"
+  - name: DC2-REMOTE
+    slug: dc2-remote
+    region: REMOTE
+    status: active
+    description: "Site Proxmox remote"
+
+netbox_device_roles:
+  - name: Firewall
+    slug: firewall
+    color: f44336
+  - name: Hypervisor
+    slug: hypervisor
+    color: 9c27b0
+  - name: Bastion
+    slug: bastion
+    color: 3f51b5
+  - name: Application
+    slug: application
+    color: 009688
+  - name: Server
+    slug: server
+    color: 607d8b
+
+netbox_manufacturers:
+  - name: Generic
+    slug: generic
+  - name: Netgate
+    slug: netgate
+
+netbox_device_types:
+  - model: Generic VM
+    slug: generic-vm
+    manufacturer: Generic
+  - model: Proxmox Host
+    slug: proxmox-host
+    manufacturer: Generic
+  - model: pfSense Firewall
+    slug: pfsense-firewall
+    manufacturer: Netgate
+
+netbox_platforms:
+  - name: Ubuntu
+    slug: ubuntu
+  - name: FreeBSD
+    slug: freebsd
+  - name: Proxmox VE
+    slug: proxmox-ve
+  - name: Debian
+    slug: debian
+  - name: Elastic Stack
+    slug: elastic-stack
+
+netbox_prefixes:
+  - prefix: 10.10.0.0/24
+    site: DC1-ONPREM
+    status: active
+    description: "LAN DC1"
+  - prefix: 10.10.10.0/24
+    site: DC1-ONPREM
+    status: active
+    description: "DMZ DC1"
+  - prefix: 10.20.0.0/24
+    site: DC2-REMOTE
+    status: active
+    description: "LAN DC2"
+  - prefix: 10.20.10.0/24
+    site: DC2-REMOTE
+    status: active
+    description: "DMZ DC2"
+  - prefix: 10.255.255.0/30
+    site: DC1-ONPREM
+    status: active
+    description: "Transit VPN DC1 vers DC2"
+  - prefix: 51.254.7.0/24
+    site: DC1-ONPREM
+    status: active
+    description: "WAN DC1"
+  - prefix: 5.135.202.0/24
+    site: DC2-REMOTE
+    status: active
+    description: "WAN DC2"
+
+netbox_devices:
+  - name: pfsense-dc1
+    site: DC1-ONPREM
+    role: Firewall
+    device_type: pfSense Firewall
+    platform: FreeBSD
+  - name: pfsense-dc2
+    site: DC2-REMOTE
+    role: Firewall
+    device_type: pfSense Firewall
+    platform: FreeBSD
+  - name: proxmox-dc1
+    site: DC1-ONPREM
+    role: Hypervisor
+    device_type: Proxmox Host
+    platform: Proxmox VE
+  - name: proxmox-dc2
+    site: DC2-REMOTE
+    role: Hypervisor
+    device_type: Proxmox Host
+    platform: Proxmox VE
+
+netbox_device_interfaces:
+  - device: pfsense-dc1
+    name: WAN
+    type: Virtual
+    enabled: true
+    description: "WAN DC1"
+  - device: pfsense-dc1
+    name: LAN
+    type: Virtual
+    enabled: true
+    description: "LAN DC1"
+  - device: pfsense-dc1
+    name: DMZ
+    type: Virtual
+    enabled: true
+    description: "DMZ DC1"
+  - device: pfsense-dc1
+    name: VPN
+    type: Virtual
+    enabled: true
+    description: "VPN site-to-site DC1"
+  - device: pfsense-dc2
+    name: WAN
+    type: Virtual
+    enabled: true
+    description: "WAN DC2"
+  - device: pfsense-dc2
+    name: LAN
+    type: Virtual
+    enabled: true
+    description: "LAN DC2"
+  - device: pfsense-dc2
+    name: DMZ
+    type: Virtual
+    enabled: true
+    description: "DMZ DC2"
+  - device: pfsense-dc2
+    name: VPN
+    type: Virtual
+    enabled: true
+    description: "VPN site-to-site DC2"
+
+netbox_vms:
+  - name: pfsense-dc1
+    site: DC1-ONPREM
+    cluster: proxmox-cluster-dc1
+    role: Firewall
+    platform: FreeBSD
+    vcpus: 2
+    memory: 2048
+    disk: 20
+  - name: netbox-dns-dc1
+    site: DC1-ONPREM
+    cluster: proxmox-cluster-dc1
+    role: Server
+    platform: Ubuntu
+    vcpus: 2
+    memory: 2048
+    disk: 10
+  - name: elasticsearch-dc1
+    site: DC1-ONPREM
+    cluster: proxmox-cluster-dc1
+    role: Server
+    platform: Ubuntu
+    vcpus: 2
+    memory: 2048
+    disk: 10
+  - name: pfsense-dc2
+    site: DC2-REMOTE
+    cluster: proxmox-cluster-dc2
+    role: Firewall
+    platform: FreeBSD
+    vcpus: 2
+    memory: 2048
+    disk: 20
+  - name: web-dc2
+    site: DC2-REMOTE
+    cluster: proxmox-cluster-dc2
+    role: Server
+    platform: Ubuntu
+    vcpus: 2
+    memory: 2048
+    disk: 10
+  - name: bastion-dc2
+    site: DC2-REMOTE
+    cluster: proxmox-cluster-dc2
+    role: Bastion
+    platform: Ubuntu
+    vcpus: 1
+    memory: 1024
+    disk: 10
+
+netbox_ip_addresses:
+  - address: 10.10.0.1/24
+    dns_name: pfsense-dc1-lan.local
+    description: "pfSense DC1 LAN"
+    assigned_object:
+      device: pfsense-dc1
+      name: LAN
+  - address: 10.10.10.1/24
+    dns_name: pfsense-dc1-dmz.local
+    description: "pfSense DC1 DMZ"
+    assigned_object:
+      device: pfsense-dc1
+      name: DMZ
+  - address: 10.10.0.10/24
+    dns_name: netbox-dns-dc1.local
+    description: "NetBox/DNS DC1"
+  - address: 10.10.0.20/24
+    dns_name: elasticsearch-dc1.local
+    description: "Elasticsearch DC1"
+  - address: 51.254.7.156/24
+    dns_name: pfsense-dc1-wan.local
+    description: "pfSense DC1 WAN"
+    assigned_object:
+      device: pfsense-dc1
+      name: WAN
+  - address: 51.254.7.254/24
+    dns_name: gateway-dc1.local
+    description: "Gateway WAN DC1"
+  - address: 10.255.255.1/30
+    dns_name: pfsense-dc1-vpn.local
+    description: "pfSense DC1 VPN"
+    assigned_object:
+      device: pfsense-dc1
+      name: VPN
+  - address: 10.20.0.1/24
+    dns_name: pfsense-dc2-lan.local
+    description: "pfSense DC2 LAN"
+    assigned_object:
+      device: pfsense-dc2
+      name: LAN
+  - address: 10.20.10.1/24
+    dns_name: pfsense-dc2-dmz.local
+    description: "pfSense DC2 DMZ"
+    assigned_object:
+      device: pfsense-dc2
+      name: DMZ
+  - address: 10.20.0.10/24
+    dns_name: web-dc2.local
+    description: "Web interne DC2"
+  - address: 10.20.10.10/24
+    dns_name: bastion-dc2.local
+    description: "Bastion DC2"
+  - address: 5.135.202.69/24
+    dns_name: pfsense-dc2-wan.local
+    description: "pfSense DC2 WAN"
+    assigned_object:
+      device: pfsense-dc2
+      name: WAN
+  - address: 10.255.255.2/30
+    dns_name: pfsense-dc2-vpn.local
+    description: "pfSense DC2 VPN"
+    assigned_object:
+      device: pfsense-dc2
+      name: VPN
+
+netbox_services:
+  - name: Proxmox API DC1
+    protocol: tcp
+    ports:
+      - 8006
+    device: proxmox-dc1
+  - name: Proxmox API DC2
+    protocol: tcp
+    ports:
+      - 8006
+    device: proxmox-dc2
+  - name: pfSense WebConfigurator DC1
+    protocol: tcp
+    ports:
+      - 443
+    device: pfsense-dc1
+  - name: pfSense WebConfigurator DC2
+    protocol: tcp
+    ports:
+      - 443
+    device: pfsense-dc2
+  - name: NetBox
+    protocol: tcp
+    ports:
+      - 80
+      - 8001
+    virtual_machine: netbox-dns-dc1
+  - name: DNS
+    protocol: udp
+    ports:
+      - 53
+    virtual_machine: netbox-dns-dc1
+  - name: Elasticsearch
+    protocol: tcp
+    ports:
+      - 9200
+    virtual_machine: elasticsearch-dc1
+  - name: HTTP
+    protocol: tcp
+    ports:
+      - 80
+    virtual_machine: web-dc2
+  - name: SSH
+    protocol: tcp
+    ports:
+      - 22
+    virtual_machine: bastion-dc2
+
+netbox_tunnel_groups:
+  - name: SITE-TO-SITE-VPN
+
+netbox_tunnels:
+  - name: VPN-DC1-DC2
+    tunnel_group: SITE-TO-SITE-VPN
+    encapsulation: ip-ip
+    status: active
+    description: "Tunnel VPN site-to-site DC1 vers DC2"

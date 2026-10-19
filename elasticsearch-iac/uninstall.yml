@@ -1,0 +1,26 @@
+- name: Remove ELK stack completely
+  hosts: all
+  become: yes
+  tasks:
+    - name: Remove filebeat, kibana, elasticsearch with purge
+      apt:
+        name:
+          - filebeat
+          - kibana
+          - elasticsearch
+        state: absent
+        purge: yes
+        autoremove: yes
+    - name: Clean apt cache
+      apt:
+        clean: yes
+    - name: Remove config directories
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/filebeat
+        - /etc/kibana
+        - /etc/elasticsearch
+        - /var/lib/filebeat
+        - /var/lib/elasticsearch

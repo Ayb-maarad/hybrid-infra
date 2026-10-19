@@ -1,0 +1,7 @@
+web_server_name: "10.20.0.3"
+web_root: "/var/www/html/internal"
+web_port: 80
+
+
+
+

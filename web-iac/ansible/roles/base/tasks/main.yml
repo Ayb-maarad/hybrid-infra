@@ -1,0 +1,16 @@
+- name: Install minimal packages
+  apt:
+    update_cache: true
+    name:
+      - curl
+      - tar
+    state: present
+
+- name: Remove apt cache
+  apt:
+    autoclean: true
+
+- name: Autoremove unused packages
+  apt:
+    autoremove: true
+    purge: true

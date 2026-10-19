@@ -1,0 +1,28 @@
+- name: Install dependencies
+  apt:
+    name:
+      - curl
+      - apt-transport-https
+    state: present
+    update_cache: yes
+
+- name: Add Elastic GPG key
+  apt_key:
+    url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    state: present
+
+- name: Add Filebeat repo
+  apt_repository:
+    repo: "deb https://artifacts.elastic.co/packages/8.x/apt stable main"
+    state: present
+
+- name: Install Filebeat
+  apt:
+    name: filebeat
+    state: present
+    update_cache: yes
+
+- name: Enable Filebeat service
+  systemd:
+    name: filebeat
+    enabled: yes

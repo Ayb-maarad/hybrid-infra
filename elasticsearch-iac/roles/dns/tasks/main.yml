@@ -1,0 +1,20 @@
+- name: Ensure NetworkManager is installed
+  apt:
+    name: network-manager
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Set DNS servers (persistent via NetworkManager)
+  nmcli:
+    conn_name: "{{ ansible_default_ipv4.interface }}"
+    type: ethernet
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    dns_ignore_auto: yes
+    state: present
+
+- name: Restart NetworkManager
+  service:
+    name: NetworkManager
+    state: restarted

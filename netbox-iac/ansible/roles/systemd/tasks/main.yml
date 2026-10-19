@@ -1,0 +1,27 @@
+- name: Deploy NetBox systemd service
+  template:
+    src: netbox.service.j2
+    dest: /etc/systemd/system/netbox.service
+    mode: "0644"
+
+- name: Deploy NetBox RQ systemd service
+  template:
+    src: netbox-rq.service.j2
+    dest: /etc/systemd/system/netbox-rq.service
+    mode: "0644"
+
+- name: Reload systemd
+  systemd:
+    daemon_reload: true
+
+- name: Enable and start NetBox
+  systemd:
+    name: netbox
+    enabled: true
+    state: restarted
+
+- name: Enable and start NetBox RQ
+  systemd:
+    name: netbox-rq
+    enabled: true
+    state: restarted

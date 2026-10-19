@@ -1,0 +1,8 @@
+- name: Deploy static website with nginx
+  hosts: web
+  become: true
+
+  roles:
+    - { role: base, tags: ["base"] }
+    - { role: nginx, tags: ["nginx"] }
+    - { role: deploy_site, tags: ["deploy_site"] }

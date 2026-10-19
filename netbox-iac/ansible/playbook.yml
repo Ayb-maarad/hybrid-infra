@@ -1,0 +1,22 @@
+- name: Install NetBox slim without Docker
+  hosts: netbox
+  become: true
+
+  roles:
+    - { role: base, tags: ["base"] }
+    - { role: postgresql, tags: ["postgresql"] }
+    - { role: redis, tags: ["redis"] }
+    - { role: netbox, tags: ["netbox"] }
+    - { role: systemd, tags: ["systemd"] }
+    - { role: nginx, tags: ["nginx"] }
+    - { role: bootstrap_api, tags: ["bootstrap_api"] }
+
+  tasks:
+    - name: Run netbox_seed role on localhost
+      delegate_to: localhost
+      become: false
+      tags: ["netbox_seed"]
+      block:
+        - name: Include netbox_seed
+          include_role:
+            name: netbox_seed

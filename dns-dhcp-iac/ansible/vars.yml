@@ -1,0 +1,51 @@
+---
+pfsense_sites:
+  site1:
+    name: "Site 1 - On-prem"
+    interface: "lan"
+    domain: "site1.local"
+    lan_ip: "10.10.0.1"
+    gateway: "10.10.0.1"
+    dns_server: "10.10.0.1"
+    dhcp_range_start: "10.10.0.100"
+    dhcp_range_end: "10.10.0.200"
+
+    host_overrides:
+      - host: "netbox"
+        domain: "site1.local"
+        ip: "10.10.0.2"
+        descr: "NetBox IPAM"
+      - host: "elastic"
+        domain: "site1.local"
+        ip: "10.10.0.3"
+        descr: "Elasticsearch observability"
+
+    domain_override:
+      domain: "site2.local"
+      ip: "10.20.0.1"
+      descr: "Forward Site 2 DNS zone to pfSense Site 2"
+
+  site2:
+    name: "Site 2 - Distant"
+    interface: "lan"
+    domain: "site2.local"
+    lan_ip: "10.20.0.1"
+    gateway: "10.20.0.1"
+    dns_server: "10.20.0.1"
+    dhcp_range_start: "10.20.0.100"
+    dhcp_range_end: "10.20.0.200"
+
+    host_overrides:
+      - host: "bastion"
+        domain: "site2.local"
+        ip: "10.20.0.2"
+        descr: "SSH Bastion"
+      - host: "web"
+        domain: "site2.local"
+        ip: "10.20.0.3"
+        descr: "Internal Nginx web server"
+
+    domain_override:
+      domain: "site1.local"
+      ip: "10.10.0.1"
+      descr: "Forward Site 1 DNS zone to pfSense Site 1"
