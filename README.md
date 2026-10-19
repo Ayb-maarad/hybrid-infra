@@ -1,18 +1,3 @@
-# T-NSA-810-LIL_4
-URLs:
-DC1: https://ns3050272.ip-51-255-76.eu:8006/
-DC2: https://ns3183326.ip-146-59-253.eu:8006/
-UserName: GR06
-Password: <à renseigner localement>
-Realm: Proxmox VE authentication server
-Site 1: 2006: login:esteban mdp:<à renseigner localement>
-Site 2 2006: login:lil4 mdp:<à renseigner localement>
-
-pfsense administration
-admin/<à renseigner localement>
-
-DC2 vm2 username/password: lil4/<à renseigner localement>
-Netbox admin: admin/<à renseigner localement>
 
 
 # Définition du plan d’adressage
